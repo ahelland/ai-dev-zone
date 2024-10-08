@@ -1,0 +1,108 @@
+﻿@page "/record"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.Extensions.Configuration
+@using Azure.AI.OpenAI;
+@using Azure;
+@using Azure.Identity;
+@using Microsoft.FluentUI.AspNetCore.Components
+@using System.Net
+
+@attribute [Authorize]
+@attribute [StreamRendering]
+@inject IConfiguration Configuration
+
+<PageTitle>Q&A Bot - Record</PageTitle>
+
+<h1>Q&A Bot - Record</h1>
+
+<p>This component demonstrates interacting with the Azure OpenAI simulator to proxy requests to a real Azure OpenAI instance. Responses are recorded to disk.</p>
+
+<FluentEditForm Model="@dialog" OnValidSubmit="@chat">
+    <AntiforgeryToken />
+    <FluentValidationSummary />
+    <FluentTextArea Rows=5 Cols=250 Name="systemMessage" Label="System Message"     @bind-Value="dialog.systemMessage" />
+    @* FluentUI + float + comma vs period == bad match => skip making temperature editable  *@
+    <FluentNumberField Step=100 Name="maxTokens"         Label="Max Output Tokens"  @bind-Value="dialog.maxTokens" />
+    <FluentTextArea Rows=5 Cols=250 Name="inputText"     Label="Question"           @bind-Value="dialog.inputText" />
+    <FluentTextArea Rows=5 Cols=250 Name="outputText"    Label="Answer"             @bind-Value="dialog.outputText" />
+
+    <div>
+        <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Submit</FluentButton>
+    </div>
+</FluentEditForm>
+
+@code {
+    public class chatDialog
+    {
+        public string? systemMessage;
+        public string? inputText;
+        public string? outputText;
+        public int maxTokens = 400;
+        public float temperature = 0.7f;
+        public float topP = 0.95f;
+    }
+
+    private string oaiEndpoint = string.Empty;
+    private string oaiDeploymentName = string.Empty;
+    private string oaiKey = string.Empty;
+    public static chatDialog dialog = new();
+
+    protected override void OnInitialized()
+    {
+        oaiEndpoint         = "http://localhost:8001";
+        oaiDeploymentName   = Configuration["oaiDeploymentName"] ?? "gpt-4o";
+        oaiKey              = Configuration["oaiKey"] ?? string.Empty;
+
+        dialog = new()
+        {
+            systemMessage = "I am a hiking enthusiast named Forest who helps people discover hikes in their area. If no area is specified, I will default to near Rainier National Park. I will then provide three suggestions for nearby hikes that vary in length. I will also share an interesting fact about the local nature on the hikes when making a recommendation.",
+            inputText = "Can you recommend some good hikes in the Redmond area?",
+            outputText = string.Empty,
+            temperature = 0.7f,
+            maxTokens = 400,
+            topP = 0.95f
+        };
+    }
+
+    protected async Task chat()
+    {
+        AzureOpenAIClient client = new AzureOpenAIClient(new Uri(oaiEndpoint), new System.ClientModel.ApiKeyCredential(oaiKey));
+
+        OpenAI.Chat.ChatClient chatClient = client.GetChatClient(oaiDeploymentName);
+
+        OpenAI.Chat.ChatCompletionOptions chatCompletionOptions = new()
+        {
+            MaxOutputTokenCount = dialog.maxTokens,
+            Temperature = dialog.temperature,
+            TopP = dialog.topP,
+        };
+
+        try
+        {
+            OpenAI.Chat.ChatCompletion completion = await chatClient.CompleteChatAsync(
+            [
+                new OpenAI.Chat.SystemChatMessage(dialog.systemMessage),
+                new OpenAI.Chat.UserChatMessage(dialog.inputText),
+            ], chatCompletionOptions);
+
+            var response = $"Response:\r\n{completion.Content[0].Text} \r\nOutput tokens: {completion.Usage.OutputTokenCount}\r\nTotal tokens: {completion.Usage.TotalTokenCount}";
+            dialog.outputText = response;
+        }
+        //Seems to not work correctly with the emulator
+        catch (HttpRequestException ex)
+        {
+            if (ex.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                dialog.outputText = "Whoa there - slow down with the tokens.";
+            }
+            else
+            {
+                dialog.outputText = "I don't know what you are talking about.";
+            }
+        }       
+    }
+}

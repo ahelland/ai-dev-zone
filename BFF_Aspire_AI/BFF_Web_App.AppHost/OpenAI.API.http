@@ -1,0 +1,181 @@
+### Verify generator
+GET http://localhost:8000/++/config
+Content-Type: application/json
+api-key: 1234
+
+### Verify recorder
+GET http://localhost:8001/++/config
+Content-Type: application/json
+api-key: 1234
+
+### Verify playback
+GET http://localhost:8002/++/config
+Content-Type: application/json
+api-key: 1234
+
+### Verify generator
+POST http://localhost:8000/openai/deployments/gpt-4o/completions?api-version=2023-05-15
+Content-Type: application/json
+api-key: 1234
+
+{
+  "model": "gpt-4o",
+  "prompt": "Once upon a time",
+  "max_tokens": 10
+}
+
+### Verify recorder
+POST http://localhost:8001/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview
+Content-Type: application/json
+api-key: 1234
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": [
+        {
+          "type": "text",
+          "text": "You are an AI assistant that helps people find information."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "once upon a time"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "\"Once upon a time\" is a classic phrase"
+        }
+      ]
+    }
+  ],
+  "temperature": 0.7,
+  "top_p": 0.95,
+  "max_tokens": 10
+}
+
+### Verify recorder
+POST http://localhost:8002/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview
+Content-Type: application/json
+api-key: 1234
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": [
+        {
+          "type": "text",
+          "text": "You are an AI assistant that helps people find information."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "once upon a time"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "\"Once upon a time\" is a classic phrase"
+        }
+      ]
+    }
+  ],
+  "temperature": 0.7,
+  "top_p": 0.95,
+  "max_tokens": 10
+}
+
+### Verify Azure OpenAI
+POST https://{ai}.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview
+Content-Type: application/json
+api-key: key
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": [
+        {
+          "type": "text",
+          "text": "You are an AI assistant that helps people find information."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "once upon a time"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "\"Once upon a time\" is a classic phrase"
+        }
+      ]
+    }
+  ],
+  "temperature": 0.7,
+  "top_p": 0.95,
+  "max_tokens": 10
+}
+
+### Verify APIM
+POST https://{apim}.azure-api.net/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview
+Content-Type: application/json
+api-key: key
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": [
+        {
+          "type": "text",
+          "text": "You are an AI assistant that helps people find information."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "once upon a time"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "\"Once upon a time\" is a classic phrase"
+        }
+      ]
+    }
+  ],
+  "temperature": 0.7,
+  "top_p": 0.95,
+  "max_tokens": 10
+}
